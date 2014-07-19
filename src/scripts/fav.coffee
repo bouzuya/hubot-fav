@@ -21,6 +21,13 @@
 Twitter = require 'twitter'
 
 module.exports = (robot) ->
+
+  # monkey patch for "twitter": "0.2.9"
+  Twitter.prototype.createFavorite = (params, callback) ->
+    url = '/favorites/create.json'
+    @post url, params, null, callback
+    @
+
   fav = (id) ->
     new Promise (resolve, reject) ->
       new Twitter(

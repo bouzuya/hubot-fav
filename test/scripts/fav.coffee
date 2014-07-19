@@ -1,6 +1,7 @@
 require '../helper'
 
 describe 'fav', ->
+
   beforeEach (done) ->
     @kakashi.scripts = [require '../../src/scripts/fav']
     @kakashi.users = [{ id: 'bouzuya', room: 'hitoridokusho' }]
@@ -14,10 +15,18 @@ describe 'fav', ->
     ''', ->
     beforeEach ->
       Twitter = require 'twitter'
-      @sinon.stub Twitter.prototype, 'createFavorite', (params, callback) ->
-        callback
-          user: { screen_name: 'bouzuya' }
-          id_str: '489046087445929985'
+      originalPost = Twitter.prototype.post
+      @sinon.stub(
+        Twitter.prototype,
+        'post',
+        (url, content, contentType, callback) ->
+          if url is '/favorites/create.json'
+            callback
+              user: { screen_name: 'bouzuya' }
+              id_str: '489046087445929985'
+          else
+            originalPost url, content, contentType, callback
+      )
 
     it 'send "https://twitter.com/bouzuya/status/489046087445929985"', (done) ->
       tweet = 'https://twitter.com/bouzuya/status/489046087445929985'
@@ -33,8 +42,16 @@ describe 'fav', ->
   describe 'receive "@hubot fav https://twitter.com/... (error)"', ->
     beforeEach ->
       Twitter = require 'twitter'
-      @sinon.stub Twitter.prototype, 'createFavorite', (params, callback) ->
-        callback new Error('error message')
+      originalPost = Twitter.prototype.post
+      @sinon.stub(
+        Twitter.prototype,
+        'post',
+        (url, content, contentType, callback) ->
+          if url is '/favorites/create.json'
+            callback new Error('error message')
+          else
+            originalPost url, content, contentType, callback
+      )
 
     it 'send "https://twitter.com/bouzuya/status/489046087445929985"', (done) ->
       tweet = 'https://twitter.com/bouzuya/status/489046087445929985'
